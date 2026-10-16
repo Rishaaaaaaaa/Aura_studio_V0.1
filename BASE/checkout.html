@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aura Studio — Secure Checkout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const formatINR = (amount) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+
+    function App() {
+      const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('aura_cart') || '[]'));
+      useEffect(() => localStorage.setItem('aura_cart', JSON.stringify(cart)), [cart]);
+
+      const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+      const gstAmount = Math.round(subtotal * 0.18);
+      const grandTotal = subtotal + gstAmount;
+
+      const updateQty = (id, delta) => setCart(prev => prev.map(item => item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item));
+
+      return (
+        <div>
+          <header className="site-header" style={{padding: '16px 48px', display: 'flex', justifyContent: 'space-between'}}>
+            <a href="index.html" className="brand-logo">
+              <div className="brand-mark">A</div>
+              <span className="brand-title">Aura Studio</span>
+            </a>
+            <div style={{fontSize: 14, color: 'gray'}}>🔒 Secure Checkout</div>
+          </header>
+
+          <main className="checkout-wrapper">
+            <div className="checkout-grid">
+              <div>
+                <div className="form-card">
+                  <h2 style={{fontFamily: 'var(--font-serif)', marginBottom: 20}}>Contact Information</h2>
+                  <div className="form-row single">
+                    <div className="input-group"><label className="input-label">Email Address</label><input type="email" className="input-field" placeholder="Email"/></div>
+                  </div>
+                  <div className="form-row single">
+                    <div className="input-group"><label className="input-label">Phone Number (India)</label><input type="tel" className="input-field" placeholder="+91"/></div>
+                  </div>
+                </div>
+
+                <div className="form-card">
+                  <h2 style={{fontFamily: 'var(--font-serif)', marginBottom: 20}}>Shipping Address</h2>
+                  <div className="form-row">
+                    <div className="input-group"><label className="input-label">First Name</label><input type="text" className="input-field" /></div>
+                    <div className="input-group"><label className="input-label">Last Name</label><input type="text" className="input-field" /></div>
+                  </div>
+                  <div className="form-row single">
+                    <div className="input-group"><label className="input-label">Street Address</label><input type="text" className="input-field" /></div>
+                  </div>
+                  <div className="form-row">
+                    <div className="input-group"><label className="input-label">City</label><input type="text" className="input-field" /></div>
+                    <div className="input-group"><label className="input-label">PIN Code</label><input type="text" className="input-field" /></div>
+                  </div>
+                  <div className="form-row single">
+                    <div className="input-group">
+                      <label className="input-label">State</label>
+                      <select className="select-field"><option>Maharashtra</option><option>Delhi</option><option>Karnataka</option><option>Uttar Pradesh</option></select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-card">
+                   <h2 style={{fontFamily: 'var(--font-serif)', marginBottom: 20}}>Payment Method</h2>
+                   <div style={{display: 'flex', gap: 16, flexDirection: 'column'}}>
+                     <label style={{display: 'flex', alignItems: 'center', gap: 10, padding: 16, border: '1px solid var(--color-border)', borderRadius: 6}}>
+                       <input type="radio" name="payment" defaultChecked/> UPI (Google Pay, PhonePe, Paytm)
+                     </label>
+                     <label style={{display: 'flex', alignItems: 'center', gap: 10, padding: 16, border: '1px solid var(--color-border)', borderRadius: 6}}>
+                       <input type="radio" name="payment"/> Credit / Debit Card
+                     </label>
+                     <label style={{display: 'flex', alignItems: 'center', gap: 10, padding: 16, border: '1px solid var(--color-border)', borderRadius: 6}}>
+                       <input type="radio" name="payment"/> Net Banking
+                     </label>
+                   </div>
+                </div>
+              </div>
+
+              <div className="order-summary-sticky">
+                <h2 style={{fontFamily: 'var(--font-serif)', marginBottom: 20}}>Order Summary</h2>
+                <div className="cart-items-list">
+                  {cart.map(item => (
+                    <div key={item.id} className="cart-item">
+                      <img src={item.image} style={{width: 60, height: 60, borderRadius: 6, objectFit: 'cover'}} />
+                      <div>
+                        <div style={{fontWeight: 600}}>{item.name}</div>
+                        <div style={{display: 'flex', gap: 10, marginTop: 5}}>
+                          <button onClick={() => updateQty(item.id, -1)} style={{border: '1px solid #ccc', width: 24, borderRadius: '50%'}}>-</button>
+                          <span>{item.quantity}</span>
+                          <button onClick={() => updateQty(item.id, 1)} style={{border: '1px solid #ccc', width: 24, borderRadius: '50%'}}>+</button>
+                        </div>
+                      </div>
+                      <div style={{fontWeight: 'bold'}}>{formatINR(item.price * item.quantity)}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="calculation-sheet">
+                  <div className="calc-row"><span>Items Subtotal</span><span style={{fontWeight: 600, color: 'black'}}>{formatINR(subtotal)}</span></div>
+                  <div className="calc-row"><span>Delivery</span><span style={{color: 'green'}}>Free</span></div>
+                  <div className="calc-row"><span>Estimated GST (18%)</span><span>{formatINR(gstAmount)}</span></div>
+                  <div className="calc-row grand-total">
+                    <span>Total</span>
+                    <span style={{fontFamily: 'var(--font-serif)', fontSize: 24}}>{formatINR(grandTotal)}</span>
+                  </div>
+                </div>
+
+                <button className="place-order-cta" onClick={() => alert('Order Placed Successfully!')}>
+                  Pay {formatINR(grandTotal)} securely
+                </button>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
